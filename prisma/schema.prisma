@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+}
+
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  AWAY
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum SenderType {
+  AGENT
+  CUSTOMER
+  SYSTEM
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING
+  RESOLVED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      UserRole   @default(AGENT)
+  avatar    String?
+  status    UserStatus @default(OFFLINE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  assignedConversations Conversation[] @relation("AssignedAgent")
+  assignedTickets       Ticket[]       @relation("TicketAgent")
+  notes                 Note[]
+  notifications         Notification[]
+  activities            Activity[]
+}
+
+model Customer {
+  id        String         @id @default(cuid())
+  name      String
+  email     String         @unique
+  phone     String?
+  company   String?
+  avatar    String?
+  status    CustomerStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  conversations Conversation[]
+  tickets       Ticket[]
+  notes         Note[]
+  tags          CustomerTag[]
+  activities    Activity[]
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  customerId      String
+  assignedAgentId String?
+  status          ConversationStatus @default(OPEN)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedAgent User?     @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  messages      Message[]
+  tickets       Ticket[]
+
+  @@index([customerId])
+  @@index([assignedAgentId])
+  @@index([status])
+}
+
+model Message {
+  id             String     @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  senderId       String
+  content        String
+  read           Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model Ticket {
+  id              String         @id @default(cuid())
+  ticketNumber    String         @unique
+  customerId      String
+  conversationId  String?
+  assignedAgentId String?
+  subject         String
+  description     String
+  priority        TicketPriority @default(MEDIUM)
+  status          TicketStatus   @default(OPEN)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  conversation  Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  assignedAgent User?         @relation("TicketAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([assignedAgentId])
+  @@index([status])
+  @@index([priority])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  customerId String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  customers CustomerTag[]
+}
+
+model CustomerTag {
+  customerId String
+  tagId      String
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, tagId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model Activity {
+  id             String   @id @default(cuid())
+  customerId     String
+  actorId        String?
+  type           String
+  title          String
+  message        String
+  href           String?
+  ticketId       String?
+  conversationId String?
+  createdAt      DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  actor    User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+}
