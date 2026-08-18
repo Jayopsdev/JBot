@@ -12,11 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { AuthUser } from "@/lib/auth";
+import { clearCurrentAgentId } from "@/lib/local-db/store";
 
 export function UserMenu({ user }: { user: AuthUser }) {
   const router = useRouter();
 
   async function handleLogout() {
+    clearCurrentAgentId();
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();

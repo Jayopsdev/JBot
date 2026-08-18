@@ -1,29 +1,28 @@
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
-import type { UserRole, UserStatus } from "@prisma/client";
+import { DEMO_AGENTS } from "@/lib/constants";
 
 export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: "ADMIN" | "AGENT";
   avatar: string | null;
-  status: UserStatus;
+  status: "ONLINE" | "OFFLINE" | "AWAY";
 };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const session = await getSession();
   if (!session) return null;
 
-  return prisma.user.findUnique({
-    where: { id: session.sub },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      avatar: true,
-      status: true,
-    },
-  });
+  const agent = DEMO_AGENTS.find((item) => item.id === session.sub);
+  if (!agent) return null;
+
+  return {
+    id: agent.id,
+    name: agent.name,
+    email: agent.email,
+    role: agent.role,
+    avatar: null,
+    status: agent.status,
+  };
 }

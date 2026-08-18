@@ -1,10 +1,17 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/require-user";
-import { listAgents } from "@/lib/data/tickets";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function GET() {
-  const { response } = await requireUser();
-  if (response) return response;
-  const agents = await listAgents();
-  return NextResponse.json({ agents });
+export function GET() {
+  return localStorageOnlyResponse();
+}
+
+export function POST() {
+  return localStorageOnlyResponse();
+}
+
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
+
+export function DELETE() {
+  return localStorageOnlyResponse();
 }

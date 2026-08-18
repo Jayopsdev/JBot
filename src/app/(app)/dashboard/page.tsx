@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -21,11 +23,12 @@ import {
 } from "@/components/dashboard/charts";
 import { UserAvatar } from "@/components/user-avatar";
 import { PriorityBadge, StatusBadge } from "@/components/status-badge";
-import { getDashboardData } from "@/lib/data/dashboard";
+import { getDashboardData } from "@/lib/local-db/queries";
+import { useDatabase } from "@/lib/local-db/store";
 import { formatRelativeTime } from "@/lib/format";
 import { APP_NAME } from "@/lib/brand";
-import { TicketPriority, TicketStatus } from "@prisma/client";
 import { EmptyState } from "@/components/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function prettyLabel(value: string) {
   return value
@@ -35,24 +38,25 @@ function prettyLabel(value: string) {
     .join(" ");
 }
 
-const STATUS_ORDER: TicketStatus[] = [
-  TicketStatus.OPEN,
-  TicketStatus.IN_PROGRESS,
-  TicketStatus.PENDING,
-  TicketStatus.RESOLVED,
-];
+const STATUS_ORDER = ["OPEN", "IN_PROGRESS", "PENDING", "RESOLVED"] as const;
+const PRIORITY_ORDER = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 
-const PRIORITY_ORDER: TicketPriority[] = [
-  TicketPriority.LOW,
-  TicketPriority.MEDIUM,
-  TicketPriority.HIGH,
-  TicketPriority.URGENT,
-];
+export default function DashboardPage() {
+  const db = useDatabase();
+  if (!db) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      </div>
+    );
+  }
 
-export const dynamic = "force-dynamic";
-
-export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const data = getDashboardData(db);
   const { stats } = data;
 
   const ticketStatusItems = STATUS_ORDER.map((status) => ({
@@ -89,7 +93,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Live workspace metrics from the local {APP_NAME} database.
+          Live workspace metrics from the {APP_NAME} browser database.
         </p>
       </div>
 
@@ -189,7 +193,7 @@ export default async function DashboardPage() {
                         {conversation.customer.name}
                       </p>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {formatRelativeTime(conversation.updatedAt)}
+                        {formatRelativeTime(new Date(conversation.updatedAt))}
                       </span>
                     </div>
                     <p className="truncate text-xs text-muted-foreground">
@@ -282,7 +286,7 @@ export default async function DashboardPage() {
                     noted on {note.customer.name}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {formatRelativeTime(note.createdAt)}
+                    {formatRelativeTime(new Date(note.createdAt))}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">

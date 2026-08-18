@@ -1,24 +1,17 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/require-user";
-import { prisma } from "@/lib/prisma";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function POST(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const { user, response } = await requireUser();
-  if (response || !user) return response;
-  const { id } = await context.params;
+export function GET() {
+  return localStorageOnlyResponse();
+}
 
-  const notification = await prisma.notification.findUnique({ where: { id } });
-  if (!notification || notification.userId !== user.id) {
-    return NextResponse.json({ error: "Notification not found" }, { status: 404 });
-  }
+export function POST() {
+  return localStorageOnlyResponse();
+}
 
-  await prisma.notification.update({
-    where: { id },
-    data: { read: true },
-  });
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
 
-  return NextResponse.json({ ok: true });
+export function DELETE() {
+  return localStorageOnlyResponse();
 }

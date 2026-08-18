@@ -1,31 +1,17 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/require-user";
-import { prisma } from "@/lib/prisma";
-import { publishRealtime } from "@/lib/realtime";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function POST(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const { response } = await requireUser();
-  if (response) return response;
+export function GET() {
+  return localStorageOnlyResponse();
+}
 
-  const { id } = await context.params;
-  const conversation = await prisma.conversation.findUnique({ where: { id } });
-  if (!conversation) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-  }
+export function POST() {
+  return localStorageOnlyResponse();
+}
 
-  await prisma.message.updateMany({
-    where: {
-      conversationId: id,
-      senderType: "CUSTOMER",
-      read: false,
-    },
-    data: { read: true },
-  });
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
 
-  publishRealtime({ type: "conversation.read", conversationId: id });
-
-  return NextResponse.json({ ok: true });
+export function DELETE() {
+  return localStorageOnlyResponse();
 }

@@ -232,9 +232,8 @@ export function ChatWidget() {
     const now = Date.now();
     if (now - lastTypingSent.current < 800) return;
     lastTypingSent.current = now;
-    void fetch(`/api/widget/conversations/${session.conversationId}/typing`, {
+    void requestJson(`/api/widget/conversations/${session.conversationId}/typing`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ customerId: session.customerId }),
     });
   }

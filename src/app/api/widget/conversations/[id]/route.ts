@@ -1,27 +1,17 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getConversationDetail } from "@/lib/data/chat";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const { id } = await context.params;
-  const customerId = new URL(request.url).searchParams.get("customerId");
+export function GET() {
+  return localStorageOnlyResponse();
+}
 
-  if (!customerId) {
-    return NextResponse.json({ error: "Missing customer" }, { status: 400 });
-  }
+export function POST() {
+  return localStorageOnlyResponse();
+}
 
-  const conversation = await prisma.conversation.findUnique({
-    where: { id },
-    select: { customerId: true },
-  });
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
 
-  if (!conversation || conversation.customerId !== customerId) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-  }
-
-  const detail = await getConversationDetail(id);
-  return NextResponse.json({ conversation: detail });
+export function DELETE() {
+  return localStorageOnlyResponse();
 }

@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatRelativeTime } from "@/lib/format";
+import { requestJson } from "@/lib/request-json";
 import { cn } from "@/lib/utils";
 
 export type HeaderNotification = {
@@ -54,7 +55,9 @@ export function NotificationsMenu({
 
   async function openNotification(notification: HeaderNotification) {
     if (!notification.read) {
-      await fetch(`/api/notifications/${notification.id}/read`, { method: "POST" });
+      await requestJson(`/api/notifications/${notification.id}/read`, {
+        method: "POST",
+      });
     }
     if (notification.href) {
       router.push(notification.href);

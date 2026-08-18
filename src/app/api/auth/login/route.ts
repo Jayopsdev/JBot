@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { DEMO_AGENTS, DEMO_PASSWORD } from "@/lib/constants";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 
 const loginSchema = z.object({
@@ -22,21 +21,9 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email } });
+    const agent = DEMO_AGENTS.find((item) => item.email === email);
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
-    }
-
-    const passwordMatches = await bcrypt.compare(
-      parsed.data.password,
-      user.password,
-    );
-
-    if (!passwordMatches) {
+    if (!agent || parsed.data.password !== DEMO_PASSWORD) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 },
@@ -44,20 +31,20 @@ export async function POST(request: Request) {
     }
 
     const token = await createSessionToken({
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
+      sub: agent.id,
+      email: agent.email,
+      name: agent.name,
+      role: agent.role,
     });
 
     await setSessionCookie(token);
 
     return NextResponse.json({
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: agent.id,
+        name: agent.name,
+        email: agent.email,
+        role: agent.role,
       },
     });
   } catch {

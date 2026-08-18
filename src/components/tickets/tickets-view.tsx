@@ -61,7 +61,7 @@ export function TicketsView({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Tickets</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {filtered.length} of {tickets.length} tickets in the local workspace.
+            {filtered.length} of {tickets.length} tickets in the workspace.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

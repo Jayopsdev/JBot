@@ -70,7 +70,7 @@ export function CustomersView({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Customers</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {total} records in the local CRM, sorted by recent activity.
+            {total} records in the CRM, sorted by recent activity.
           </p>
         </div>
         <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">

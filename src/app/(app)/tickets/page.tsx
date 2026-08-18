@@ -1,29 +1,48 @@
-import { listAgents, listTickets } from "@/lib/data/tickets";
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { TicketsView } from "@/components/tickets/tickets-view";
+import { listAgents, listTickets } from "@/lib/local-db/queries";
+import { useDatabase } from "@/lib/local-db/store";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const dynamic = "force-dynamic";
+function TicketsPageInner() {
+  const searchParams = useSearchParams();
+  const db = useDatabase();
 
-export default async function TicketsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    q?: string;
-    status?: string;
-    priority?: string;
-    agent?: string;
-  }>;
-}) {
-  const params = await searchParams;
-  const [tickets, agents] = await Promise.all([listTickets(), listAgents()]);
+  if (!db) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
 
   return (
     <TicketsView
-      tickets={tickets}
-      agents={agents}
-      initialQuery={params.q ?? ""}
-      initialStatus={params.status ?? "ALL"}
-      initialPriority={params.priority ?? "ALL"}
-      initialAgent={params.agent ?? "ALL"}
+      tickets={listTickets(db)}
+      agents={listAgents(db)}
+      initialQuery={searchParams.get("q") ?? ""}
+      initialStatus={searchParams.get("status") ?? "ALL"}
+      initialPriority={searchParams.get("priority") ?? "ALL"}
+      initialAgent={searchParams.get("agent") ?? "ALL"}
     />
+  );
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-80 w-full" />
+        </div>
+      }
+    >
+      <TicketsPageInner />
+    </Suspense>
   );
 }

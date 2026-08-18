@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { ChatWorkspace } from "@/components/chat/chat-workspace";
 import { getCurrentUser } from "@/lib/auth";
-import { getConversationDetail, listConversations } from "@/lib/data/chat";
-import { listAgents } from "@/lib/data/tickets";
+import { DEMO_AGENTS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -17,20 +16,15 @@ export default async function ChatPage({
   }
 
   const params = await searchParams;
-  const [conversations, agents, initialDetail] = await Promise.all([
-    listConversations(),
-    listAgents(),
-    params.conversation ? getConversationDetail(params.conversation) : Promise.resolve(null),
-  ]);
 
   return (
     <ChatWorkspace
-      key={initialDetail?.id ?? "inbox"}
+      key={params.conversation ?? "inbox"}
       agent={user}
-      initialConversations={conversations}
-      initialConversationId={initialDetail?.id ?? null}
-      initialDetail={initialDetail}
-      agents={agents}
+      initialConversations={[]}
+      initialConversationId={params.conversation ?? null}
+      initialDetail={null}
+      agents={DEMO_AGENTS.map((agent) => ({ id: agent.id, name: agent.name }))}
     />
   );
 }

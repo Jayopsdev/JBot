@@ -94,7 +94,7 @@ export function ChatWorkspace({
       );
       setDetail(payload.conversation);
       if (markRead) {
-        await fetch(`/api/conversations/${id}/read`, { method: "POST" });
+        await requestJson(`/api/conversations/${id}/read`, { method: "POST" });
         setConversations((current) =>
           current.map((item) =>
             item.id === id ? { ...item, unreadCount: 0 } : item,
@@ -205,7 +205,7 @@ export function ChatWorkspace({
             : current,
         );
         if (event.message.senderType === "CUSTOMER") {
-          void fetch(`/api/conversations/${event.conversationId}/read`, {
+          void requestJson(`/api/conversations/${event.conversationId}/read`, {
             method: "POST",
           });
         }
@@ -214,6 +214,24 @@ export function ChatWorkspace({
   }, []);
 
   const connection = useRealtime(handleEvent);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void requestJson<{ conversations: ConversationSummary[] }>("/api/conversations")
+        .then((payload) => {
+          if (!cancelled) setConversations(payload.conversations);
+        })
+        .catch(() => undefined);
+      if (initialConversationId) {
+        void loadDetail(initialConversationId, true);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [initialConversationId, loadDetail]);
 
   useEffect(() => {
     const interval = window.setInterval(async () => {
@@ -305,7 +323,7 @@ export function ChatWorkspace({
     const now = Date.now();
     if (now - lastTypingSent.current < 800) return;
     lastTypingSent.current = now;
-    void fetch(`/api/conversations/${selectedId}/typing`, { method: "POST" });
+    void requestJson(`/api/conversations/${selectedId}/typing`, { method: "POST" });
   }
 
   const selected = useMemo(

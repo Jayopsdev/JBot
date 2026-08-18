@@ -1,20 +1,36 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useParams } from "next/navigation";
 import { TicketDetailView } from "@/components/tickets/ticket-detail";
-import { getTicketDetail, listAgents } from "@/lib/data/tickets";
+import { EmptyState } from "@/components/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getTicketDetail, listAgents } from "@/lib/local-db/queries";
+import { useDatabase } from "@/lib/local-db/store";
+import { Ticket } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export default function TicketDetailPage() {
+  const params = useParams<{ id: string }>();
+  const db = useDatabase();
 
-export default async function TicketDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const [ticket, agents] = await Promise.all([getTicketDetail(id), listAgents()]);
-
-  if (!ticket) {
-    notFound();
+  if (!db) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
   }
 
-  return <TicketDetailView initial={ticket} agents={agents} />;
+  const ticket = getTicketDetail(db, params.id);
+  if (!ticket) {
+    return (
+      <EmptyState
+        icon={Ticket}
+        title="Ticket not found"
+        description="This ticket is not in the browser database."
+      />
+    );
+  }
+
+  return <TicketDetailView key={ticket.id} initial={ticket} agents={listAgents(db)} />;
 }

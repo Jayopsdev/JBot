@@ -1,38 +1,17 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/require-user";
-import { prisma } from "@/lib/prisma";
-import { getCustomerProfile } from "@/lib/data/customers";
-import { recordActivity } from "@/lib/activity";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ id: string; tagId: string }> },
-) {
-  const { user, response } = await requireUser();
-  if (response || !user) return response;
-  const { id, tagId } = await context.params;
+export function GET() {
+  return localStorageOnlyResponse();
+}
 
-  const existing = await prisma.customerTag.findUnique({
-    where: { customerId_tagId: { customerId: id, tagId } },
-    include: { tag: true, customer: true },
-  });
+export function POST() {
+  return localStorageOnlyResponse();
+}
 
-  if (!existing) {
-    return NextResponse.json({ error: "Tag not found on this customer" }, { status: 404 });
-  }
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
 
-  await prisma.customerTag.delete({
-    where: { customerId_tagId: { customerId: id, tagId } },
-  });
-
-  await recordActivity({
-    customerId: id,
-    actorId: user.id,
-    type: "tag.removed",
-    title: "Tag removed",
-    message: `${existing.tag.name} was removed from ${existing.customer.name}.`,
-    href: `/customers/${id}`,
-  });
-
-  return NextResponse.json({ customer: await getCustomerProfile(id) });
+export function DELETE() {
+  return localStorageOnlyResponse();
 }

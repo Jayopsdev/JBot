@@ -8,14 +8,14 @@ export default function LoginPage() {
         <p className="text-sm font-semibold tracking-tight">{APP_NAME}</p>
         <div className="max-w-md">
           <p className="text-3xl font-semibold tracking-tight">
-            {APP_TAGLINE} in one local workspace.
+            {APP_TAGLINE} in one workspace.
           </p>
           <p className="mt-4 text-sm leading-6 text-slate-300">
             Sign in as an agent, pick up a live conversation, and keep CRM and
-            ticketing connected from a single SQLite database.
+            ticketing connected from the same browser database.
           </p>
         </div>
-        <p className="text-xs text-slate-500">Interview demo · No cloud database required</p>
+        <p className="text-xs text-slate-500">Interview demo · Data stays in this browser</p>
       </div>
       <div className="flex items-center justify-center px-6 py-12">
         <LoginForm />

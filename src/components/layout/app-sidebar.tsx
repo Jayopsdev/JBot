@@ -54,7 +54,7 @@ export function AppSidebar({
           Demo workspace
         </p>
         <p className="mt-1 text-xs text-sidebar-foreground/70">
-          Local SQLite · {APP_NAME}
+          Browser storage · {APP_NAME}
         </p>
         {unreadNotifications > 0 ? (
           <p className="mt-2 text-[11px] text-indigo-200">

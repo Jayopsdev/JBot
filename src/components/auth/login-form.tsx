@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/constants";
 import { APP_NAME } from "@/lib/brand";
+import { getDatabase, setCurrentAgentId } from "@/lib/local-db/store";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email"),
@@ -42,13 +43,20 @@ export function LoginForm() {
         body: JSON.stringify(parsed.data),
       });
 
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as {
+        error?: string;
+        user?: { id: string };
+      };
 
       if (!response.ok) {
         toast.error(payload.error ?? "Unable to sign in");
         return;
       }
 
+      if (payload.user?.id) {
+        setCurrentAgentId(payload.user.id);
+      }
+      getDatabase();
       toast.success("Welcome back");
       router.push("/dashboard");
       router.refresh();

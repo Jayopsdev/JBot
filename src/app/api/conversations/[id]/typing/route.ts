@@ -1,20 +1,17 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/require-user";
-import { publishRealtime } from "@/lib/realtime";
+import { localStorageOnlyResponse } from "@/lib/local-db/disabled-route";
 
-export async function POST(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const { response } = await requireUser();
-  if (response) return response;
+export function GET() {
+  return localStorageOnlyResponse();
+}
 
-  const { id } = await context.params;
-  publishRealtime({
-    type: "typing",
-    conversationId: id,
-    senderType: "AGENT",
-  });
+export function POST() {
+  return localStorageOnlyResponse();
+}
 
-  return NextResponse.json({ ok: true });
+export function PATCH() {
+  return localStorageOnlyResponse();
+}
+
+export function DELETE() {
+  return localStorageOnlyResponse();
 }
