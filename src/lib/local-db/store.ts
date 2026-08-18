@@ -12,6 +12,7 @@ import type { RealtimeEvent } from "@/lib/chat-types";
 const serverSnapshot: AppDatabase | null = null;
 let snapshot: AppDatabase | null = null;
 let snapshotRaw: string | null = null;
+let memoryDatabase: AppDatabase | null = null;
 
 function canUseStorage() {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -27,56 +28,100 @@ export function newId(prefix: string) {
 
 export function getCurrentAgentId() {
   if (!canUseStorage()) return "user_alex";
-  return localStorage.getItem(AGENT_ID_KEY) ?? "user_alex";
+  try {
+    return localStorage.getItem(AGENT_ID_KEY) ?? "user_alex";
+  } catch {
+    return "user_alex";
+  }
 }
 
 export function setCurrentAgentId(agentId: string) {
   if (!canUseStorage()) return;
-  localStorage.setItem(AGENT_ID_KEY, agentId);
+  try {
+    localStorage.setItem(AGENT_ID_KEY, agentId);
+  } catch {
+    // ignore quota / private-mode failures
+  }
 }
 
 export function clearCurrentAgentId() {
   if (!canUseStorage()) return;
-  localStorage.removeItem(AGENT_ID_KEY);
+  try {
+    localStorage.removeItem(AGENT_ID_KEY);
+  } catch {
+    // ignore
+  }
 }
 
-function parseDatabase(raw: string): AppDatabase {
-  return JSON.parse(raw) as AppDatabase;
+function isAppDatabase(value: unknown): value is AppDatabase {
+  if (!value || typeof value !== "object") return false;
+  const db = value as AppDatabase;
+  return (
+    Array.isArray(db.users) &&
+    Array.isArray(db.customers) &&
+    Array.isArray(db.conversations) &&
+    Array.isArray(db.messages) &&
+    Array.isArray(db.tickets) &&
+    Array.isArray(db.notes) &&
+    Array.isArray(db.tags) &&
+    Array.isArray(db.customerTags) &&
+    Array.isArray(db.notifications) &&
+    Array.isArray(db.activities) &&
+    Array.isArray(db.onlineCustomerIds)
+  );
+}
+
+function readMemoryDatabase() {
+  memoryDatabase ??= createSeedDatabase();
+  return memoryDatabase;
 }
 
 export function getDatabase(): AppDatabase {
   if (!canUseStorage()) {
-    return createSeedDatabase();
+    return readMemoryDatabase();
   }
 
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    if (raw === snapshotRaw && snapshot) return snapshot;
-    const parsed = parseDatabase(raw);
-    snapshot = parsed;
-    snapshotRaw = raw;
-    return parsed;
-  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      if (raw === snapshotRaw && snapshot) return snapshot;
+      const parsed = JSON.parse(raw) as unknown;
+      if (isAppDatabase(parsed)) {
+        snapshot = parsed;
+        snapshotRaw = raw;
+        return parsed;
+      }
+    }
 
-  const seeded = createSeedDatabase();
-  const rawSeed = JSON.stringify(seeded);
-  localStorage.setItem(STORAGE_KEY, rawSeed);
-  snapshot = seeded;
-  snapshotRaw = rawSeed;
-  return seeded;
+    const seeded = createSeedDatabase();
+    const rawSeed = JSON.stringify(seeded);
+    localStorage.setItem(STORAGE_KEY, rawSeed);
+    snapshot = seeded;
+    snapshotRaw = rawSeed;
+    return seeded;
+  } catch {
+    return readMemoryDatabase();
+  }
 }
 
 export function persistDatabase(db: AppDatabase) {
-  if (!canUseStorage()) return;
-  const raw = JSON.stringify(db);
-  localStorage.setItem(STORAGE_KEY, raw);
   snapshot = db;
-  snapshotRaw = raw;
-  window.dispatchEvent(new Event(DB_EVENT));
+  if (!canUseStorage()) {
+    memoryDatabase = db;
+    return;
+  }
+  try {
+    const raw = JSON.stringify(db);
+    localStorage.setItem(STORAGE_KEY, raw);
+    snapshotRaw = raw;
+    window.dispatchEvent(new Event(DB_EVENT));
+  } catch {
+    memoryDatabase = db;
+  }
 }
 
 export function emitRealtime(event: RealtimeEvent) {
-  if (!canUseStorage()) return;
+  if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(REALTIME_EVENT, { detail: event }));
 }
 
@@ -93,7 +138,7 @@ export function updateDatabase(
 }
 
 function subscribe(onStoreChange: () => void) {
-  if (!canUseStorage()) return () => {};
+  if (typeof window === "undefined") return () => {};
 
   const onLocal = () => onStoreChange();
   const onStorage = (event: StorageEvent) => {

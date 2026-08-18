@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/session";
-import { DEMO_AGENTS } from "@/lib/constants";
+import { findDemoAgent } from "@/lib/constants";
 
 export type AuthUser = {
   id: string;
@@ -14,7 +14,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   const session = await getSession();
   if (!session) return null;
 
-  const agent = DEMO_AGENTS.find((item) => item.id === session.sub);
+  const agent = findDemoAgent(session);
   if (!agent) return null;
 
   return {

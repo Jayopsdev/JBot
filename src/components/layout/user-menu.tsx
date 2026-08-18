@@ -2,7 +2,6 @@
 
 import { LogOut, UserRound } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,24 +23,17 @@ export function UserMenu({ user }: { user: AuthUser }) {
         cache: "no-store",
       });
     } finally {
-      window.location.assign("/login");
+      window.location.replace("/login?loggedOut=1");
     }
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            className="h-auto gap-2 px-1.5 py-1 text-left"
-          />
-        }
-      >
+      <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 text-left hover:bg-muted">
         <UserAvatar name={user.name} avatar={user.avatar} size="sm" />
-        <span className="hidden leading-tight md:block">
+        <span className="hidden leading-tight md:inline-block">
           <span className="block text-sm font-medium">{user.name}</span>
-          <span className="block text-[11px] text-muted-foreground">
+          <span className="block text-[11px] font-normal text-muted-foreground">
             {user.role}
           </span>
         </span>
@@ -54,15 +46,14 @@ export function UserMenu({ user }: { user: AuthUser }) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => {
-            window.location.assign("/settings");
-          }}
-        >
+        <DropdownMenuItem onClick={() => window.location.assign("/settings")}>
           <UserRound className="size-4" />
           Profile & settings
         </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => void handleLogout()}
+        >
           <LogOut className="size-4" />
           Log out
         </DropdownMenuItem>

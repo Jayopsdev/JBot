@@ -1,6 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/constants";
+import {
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
+  getSessionCookieOptions,
+} from "@/lib/constants";
 
 export type SessionPayload = {
   sub: string;
@@ -40,19 +44,10 @@ export async function verifySessionToken(token: string) {
   }
 }
 
-function sessionCookieOptions() {
-  return {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  };
-}
-
 export async function setSessionCookie(token: string) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
-    ...sessionCookieOptions(),
+    ...getSessionCookieOptions(),
     maxAge: SESSION_MAX_AGE,
   });
 }
@@ -60,7 +55,7 @@ export async function setSessionCookie(token: string) {
 export async function clearSessionCookie() {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, "", {
-    ...sessionCookieOptions(),
+    ...getSessionCookieOptions(),
     maxAge: 0,
     expires: new Date(0),
   });
