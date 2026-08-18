@@ -59,7 +59,10 @@ export function getDatabase(): AppDatabase {
   }
 
   const seeded = createSeedDatabase();
-  persistDatabase(seeded);
+  const rawSeed = JSON.stringify(seeded);
+  localStorage.setItem(STORAGE_KEY, rawSeed);
+  snapshot = seeded;
+  snapshotRaw = rawSeed;
   return seeded;
 }
 
